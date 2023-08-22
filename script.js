@@ -1,64 +1,71 @@
 // Get the required elements
-const video = document.querySelector(".flex");
-const progressBar = document.querySelector(".progress__filled");
-const playButton = document.querySelector(".toggle");
-const volumeSlider = document.querySelector('input[name="volume"]');
-const speedSlider = document.querySelector('input[name="playbackRate"]');
-const skipButtons = document.querySelectorAll("[data-skip]");
-const speedBar = document.querySelector(".speed-bar");
+const video = document.querySelector('video');
+const progressBar = document.querySelector('.progress__filled');
+const playButton = document.querySelector('.player__button');
+const volumeInput = document.querySelector('input[name="volume"]');
+const playbackSpeedInput = document.querySelector('input[name="playbackRate"]');
+const skipButtons = document.querySelectorAll('[data-skip]');
+const speedBar = document.querySelector('.speed-bar');
 
-// Add event listeners
-video.addEventListener("click", togglePlay);
-video.addEventListener("play", updateButton);
-video.addEventListener("pause", updateButton);
-video.addEventListener("timeupdate", updateProgress);
-playButton.addEventListener("click", togglePlay);
-volumeSlider.addEventListener("input", handleVolumeChange);
-speedSlider.addEventListener("input", handleSpeedChange);
-skipButtons.forEach((button) => button.addEventListener("click", skip));
-speedBar.addEventListener("mousemove", handleSpeedBarMove);
+// Add event listeners for play/pause button
+playButton.addEventListener('click', togglePlay);
 
-// Function to toggle play/pause
+// Add event listener for progress update
+video.addEventListener('timeupdate', updateProgress);
+
+// Add event listener for progress bar click
+progressBar.parentElement.addEventListener('click', scrub);
+
+// Add event listeners for volume and playback speed
+volumeInput.addEventListener('input', handleVolumeChange);
+playbackSpeedInput.addEventListener('input', handlePlaybackSpeedChange);
+
+// Add event listeners for skip buttons
+skipButtons.forEach(button => button.addEventListener('click', skip));
+
+// Update play/pause button
+function updatePlayButton() {
+  playButton.textContent = video.paused ? '►' : '❚ ❚';
+}
+
+// Toggle play/pause on button click
 function togglePlay() {
-  const method = video.paused ? "play" : "pause";
-  video[method]();
+  if (video.paused) {
+    video.play();
+  } else {
+    video.pause();
+  }
+  updatePlayButton();
 }
 
-// Function to update the play/pause button
-function updateButton() {
-  const icon = this.paused ? "►" : "❚ ❚";
-  playButton.textContent = icon;
-}
-
-// Function to update the progress bar
+// Update progress bar
 function updateProgress() {
   const percent = (video.currentTime / video.duration) * 100;
   progressBar.style.flexBasis = `${percent}%`;
 }
 
-// Function to handle volume change
+// Scrub through the video
+function scrub(e) {
+  const scrubTime = (e.offsetX / progressBar.parentElement.offsetWidth) * video.duration;
+  video.currentTime = scrubTime;
+}
+
+// Handle volume change
 function handleVolumeChange() {
   video.volume = this.value;
 }
 
-// Function to handle speed change
-function handleSpeedChange() {
+// Handle playback speed change
+function handlePlaybackSpeedChange() {
   video.playbackRate = this.value;
+  speedBar.textContent = `${this.value}×`;
 }
 
-// Function to skip ahead or back
+// Skip forward or backward
 function skip() {
-  video.currentTime += parseFloat(this.dataset.skip);
+  const skipTime = parseFloat(this.dataset.skip);
+  video.currentTime += skipTime;
 }
 
-// Function to handle mouse movement on speed bar
-function handleSpeedBarMove(event) {
-  const barWidth = speedBar.offsetWidth;
-  const mouseX = event.offsetX;
-  const percent = (mouseX / barWidth) * 100;
-  const minSpeed = 0.5;
-  const maxSpeed = 4;
-  const speed = (percent / 100) * (maxSpeed - minSpeed) + minSpeed;
-  speedSlider.value = speed.toFixed(1);
-  video.playbackRate = speed;
-}
+// Initial setup
+updatePlayButton();
